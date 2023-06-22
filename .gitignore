@@ -1,0 +1,12 @@
+.idea/*
+*.csv
+*.xlsx
+*.xls
+.ipynb_checkpoints
+__pycache__
+*.npy
+*.csv
+*.pyc
+settings.py
+*.xml
+*.iml
