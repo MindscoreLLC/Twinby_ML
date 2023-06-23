@@ -12,12 +12,12 @@ from nltk.tokenize import word_tokenize
 from nltk.tokenize import sent_tokenize
 from nltk.stem import WordNetLemmatizer
 from nltk.corpus import stopwords
-stopwords.words('english')
+stopwords.words('russian')
 from nltk.stem.porter import PorterStemmer
 
 
 def remove_Stopwords(text):
-    stop_words = set(stopwords.words('english'))
+    stop_words = set(stopwords.words('russian'))
     words = word_tokenize(text.lower())
     sentence = [w for w in words if not w in stop_words]
     return " ".join(sentence)
@@ -26,7 +26,7 @@ def remove_Stopwords(text):
 def lemmatize_text(text):
     wordlist = []
     lemmatizer = WordNetLemmatizer()
-    sentences = sent_tokenize(text)
+    sentences  = sent_tokenize(text)
     for sentence in sentences:
         words = word_tokenize(sentence)
         for word in words:
