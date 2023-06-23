@@ -10,3 +10,4 @@ __pycache__
 settings.py
 *.xml
 *.iml
+data
