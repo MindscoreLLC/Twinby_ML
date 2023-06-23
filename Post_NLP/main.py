@@ -43,7 +43,7 @@ df_post    = pd.read_sql('''
 SELECT 
          Client.client_id
         ,Post.owner_id
-        ,Post.text
+        ,Post.text::json->'text' as text
 
         FROM "Client" as Client
         inner join "Entrypoint" as Entrypoint on 
@@ -61,6 +61,7 @@ df_psychotypes = df_profile[['client_id']].drop_duplicates()
 df_psychotypes['Subject'] = np.random.choice(psychotypes, df_psychotypes.shape[0])
 display(df_psychotypes)
 display(df_post.shape)
+
 df_post = df_post.merge(df_profile, on='client_id').query("owner_id == user_id")
 display(df_post.shape)
 df_post = df_post.merge(df_psychotypes, on='client_id')[['text', 'Subject']]
