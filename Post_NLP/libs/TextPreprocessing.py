@@ -9,7 +9,9 @@ from nltk.tokenize import sent_tokenize, word_tokenize
 from bs4 import BeautifulSoup
 from nltk.corpus import stopwords
 from nltk.stem import snowball
-
+import spacy
+import ru_core_news_md
+nlp = ru_core_news_md.load()
 
 import os
 # загрузка стоп-слов
@@ -119,7 +121,7 @@ class TextPreprocessing:
            используется декоратор CreationBagWords.process_text_in_df, благодаря которому в данный метод
            будет передана строка, даже если при ее вызове был указан датафрейм в качестве параметра text_obj 
         '''
-        return re.sub(r'[^А-Яа-яЁёA-Za-z0-9]+', '', text_obj)
+        return re.sub(r'[^А-Яа-яЁёA-Za-z0-9 ]+', '', text_obj)
         
 
     @staticmethod
@@ -283,4 +285,9 @@ class TextPreprocessing:
                # else: # иначе применяется стемминг (удаление окончания слова)
                     #processed_text.append(stemmer.stem(word))
 
-
+    @staticmethod
+    @time_log
+    @process_text_in_df
+    def stemming_and_lemmatization_v2(text_obj):
+        """Лемматизация"""
+        return ' '.join([token.lemma_ for token in nlp(text_obj)])
