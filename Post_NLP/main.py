@@ -105,7 +105,7 @@ df_new['new_text']  = df_new['new_text'].progress_apply(TextPreprocessing.clean_
 
 df_new['new_text']  = df_new['new_text'].progress_apply(clean_text)  # знаки препинания удаляются во всех языках
 # леммматизация (ускорить, возможно есть другая модель не для английского вместо stemSentence)
-# df_new['new_text']  = df_new['new_text'].progress_apply(TextPreprocessing.stemming_and_lemmatization, duration_log=False) # стемминг для русского
+df_new['new_text']  = df_new['new_text'].progress_apply(TextPreprocessing.stemming_and_lemmatization_v2, duration_log=False) # стемминг для русского
 # df_new['stem_text'] = df_new['new_text'].progress_apply(stemSentence)  # ? не работает
 
 df_new['len'] = df_new['new_text'].str.strip().str.len()
