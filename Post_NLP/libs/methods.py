@@ -1,4 +1,8 @@
 import nltk
+import string
+string.punctuation
+
+
 # nltk.download('punkt')
 # nltk.download('stopwords')
 # nltk.download('wordnet')
@@ -8,10 +12,12 @@ from nltk.tokenize import word_tokenize
 from nltk.tokenize import sent_tokenize
 from nltk.stem import WordNetLemmatizer
 from nltk.corpus import stopwords
-stopwords.words('english')
+stopwords.words('russian')
+from nltk.stem.porter import PorterStemmer
+
 
 def remove_Stopwords(text):
-    stop_words = set(stopwords.words('english'))
+    stop_words = set(stopwords.words('russian')) | set(stopwords.words('english'))
     words = word_tokenize(text.lower())
     sentence = [w for w in words if not w in stop_words]
     return " ".join(sentence)
@@ -20,7 +26,7 @@ def remove_Stopwords(text):
 def lemmatize_text(text):
     wordlist = []
     lemmatizer = WordNetLemmatizer()
-    sentences = sent_tokenize(text)
+    sentences  = sent_tokenize(text)
     for sentence in sentences:
         words = word_tokenize(sentence)
         for word in words:
@@ -42,7 +48,7 @@ def clean_text(text):
 def stemSentence(text):
     porter = PorterStemmer()
     token_words = word_tokenize(text)
-    token_words
+
     stem_sentence = []
     for word in token_words:
         stem_sentence.append(porter.stem(word))
