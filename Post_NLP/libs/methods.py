@@ -17,7 +17,7 @@ from nltk.stem.porter import PorterStemmer
 
 
 def remove_Stopwords(text):
-    stop_words = set(stopwords.words('russian'))
+    stop_words = set(stopwords.words('russian')) | set(stopwords.words('english'))
     words = word_tokenize(text.lower())
     sentence = [w for w in words if not w in stop_words]
     return " ".join(sentence)
