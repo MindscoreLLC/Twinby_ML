@@ -93,6 +93,8 @@ display(df_profile.head(3))
 
 #                           ПСИХОТИПЫ
 psychotypes    = list('ABCDEFG')
+# количество возможных классов (психотипов)
+NUM_CLASSES    = len(psychotypes)
 df_psychotypes = df_profile[['client_id']].drop_duplicates()
 df_psychotypes['Subject'] = np.random.choice(psychotypes, df_psychotypes.shape[0])
 
@@ -177,7 +179,7 @@ display(train_size, test_size)
 
 #Initialize Bert tokenizer and masks
 
-bert_model_name = 'bert-base-uncased'
+bert_model_name = 'cointegrated/rubert-tiny2' # cointegrated/rubert-tiny2    bert-base-uncased
 
 tokenizer = BertTokenizer.from_pretrained(bert_model_name, do_lower_case=True)
 MAX_LEN = 511
@@ -244,7 +246,7 @@ def create_model():
                                            name="input_word_ids")
     bert_layer = transformers.TFBertModel.from_pretrained('bert-large-uncased')
     bert_outputs = bert_layer(input_word_ids)[0]
-    pred = tf.keras.layers.Dense(16, activation='softmax')(bert_outputs[:,0,:])
+    pred = tf.keras.layers.Dense(NUM_CLASSES, activation='softmax')(bert_outputs[:,0,:])
     
     model = tf.keras.models.Model(inputs=input_word_ids, outputs=pred)
     loss = tf.keras.losses.SparseCategoricalCrossentropy(from_logits=True)
@@ -279,7 +281,7 @@ def get_type_index(string):
 
 train_data['type_index'] = df_new['Subject'].apply(get_type_index)
 display(train_data)
-one_hot_labels = tf.keras.utils.to_categorical(train_data.type_index.values, num_classes=16)
+one_hot_labels = tf.keras.utils.to_categorical(train_data.type_index.values, num_classes=NUM_CLASSES)
 
 model.fit(np.array(train_input_ids), one_hot_labels, verbose = 1, epochs = NR_EPOCHS, batch_size = BATCH_SIZE,  callbacks = [tf.keras.callbacks.EarlyStopping(patience = 5)])
 
@@ -294,8 +296,8 @@ model.fit(np.array(train_input_ids), one_hot_labels, verbose = 1, epochs = NR_EP
 #                           ТЕСТИРОВАНИЕ
 
 test_data['type_index'] = df_new['Subject'].apply(get_type_index)
-
-test_labels = tf.keras.utils.to_categorical(test_data.type_index.values, num_classes=16)
+test_data
+test_labels = tf.keras.utils.to_categorical(test_data.type_index.values, num_classes=len(psychotypes))
 model.evaluate(np.array(test_input_ids), test_labels)
 
 
@@ -314,4 +316,5 @@ sentence_inputs = pad_sequences(sentence_inputs, maxlen=MAX_LEN, dtype="long", v
 prediction = model.predict(np.array(sentence_inputs))
 df_predict.loc[0, cols] = prediction
 
+df_predict
 
