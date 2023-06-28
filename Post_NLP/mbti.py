@@ -244,7 +244,7 @@ def precision_m(y_true, y_pred):
 def create_model(): 
     input_word_ids = tf.keras.layers.Input(shape=(MAX_LEN,), dtype=tf.int32,
                                            name="input_word_ids")
-    bert_layer = transformers.TFBertModel.from_pretrained('bert-large-uncased')
+    bert_layer = transformers.TFBertModel.from_pretrained(bert_model_name)
     bert_outputs = bert_layer(input_word_ids)[0]
     pred = tf.keras.layers.Dense(NUM_CLASSES, activation='softmax')(bert_outputs[:,0,:])
     
