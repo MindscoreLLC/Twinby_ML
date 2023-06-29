@@ -1,28 +1,16 @@
-# import sys
-# sys.path.append('../')
 import pandas as pd
 import numpy as np
-import matplotlib.pyplot as plt
-import seaborn as sns
-import json
-from sklearn.model_selection import train_test_split
 
 import warnings
 warnings.filterwarnings('ignore')
 
 from libs.TextPreprocessing import TextPreprocessing
-from libs.methods import remove_Stopwords, lemmatize_text, clean_text, stemSentence
 from IPython.display import display
 from tqdm import tqdm
 tqdm.pandas()
 
-# from navec import Navec
-from nltk.stem.porter import PorterStemmer
-
-from keras.preprocessing.text import Tokenizer
-from keras.utils import pad_sequences
-from keras.callbacks import Callback, ReduceLROnPlateau, EarlyStopping
-
+import nltk
+nltk.download('stopwords')
 
 from tqdm import tqdm
 import os
@@ -32,20 +20,11 @@ import warnings
 warnings.filterwarnings('ignore')
 
 import tensorflow as tf
-from sklearn.metrics import accuracy_score
-from nltk.stem import WordNetLemmatizer
-from sklearn.model_selection import train_test_split
-import regex as re
 import transformers
-from keras import backend as K
-import plotly.express as px
 
 from transformers import BertTokenizer
 from keras.utils import pad_sequences
 from sklearn.model_selection import train_test_split
-
-
-from sqlalchemy import create_engine
 
 
 
@@ -105,9 +84,9 @@ display(df_psychotypes)
 display(df_post.shape)
 display(df_post.merge(df_profile, on='client_id'))
 
-df_post = df_post.merge(df_profile, on='client_id').query("owner_id == user_id")#.iloc[:100000]
+df_post = df_post.merge(df_profile, on='client_id').query("owner_id == user_id") #.iloc[:20000]
 display(df_post.shape)
-df_post = df_post.merge(df_psychotypes, on='client_id')#[['text', 'Subject']]
+df_post = df_post.merge(df_psychotypes, on='client_id')
 display(df_post.shape)
 
 
@@ -121,14 +100,17 @@ df_post['new_text']  = df_post['text'].progress_apply(TextPreprocessing.clean_fo
 df_post['new_text']  = df_post['new_text'].progress_apply(TextPreprocessing.clean_html, duration_log=False)
 # удаление спец символов html
 df_post['new_text']  = df_post['new_text'].progress_apply(TextPreprocessing.clean_html_special_characters_v2, duration_log=False)
-# стоп слова
-df_post['new_text']  = df_post['new_text'].progress_apply(remove_Stopwords)  # работают для русского
+
+# леммматизация (ускорить, возможно есть другая модель не для английского вместо stemSentence)
+df_post['new_text']  = df_post['new_text'].progress_apply(TextPreprocessing.stemming_and_lemmatization_v2, duration_log=False) # стемминг для русского
 
 # знаки препинания
 df_post['new_text']  = df_post['new_text'].progress_apply(TextPreprocessing.clean_text_total, duration_log=False)  # знаки препинания удаляются во всех языках
 
-# леммматизация (ускорить, возможно есть другая модель не для английского вместо stemSentence)
-df_post['new_text']  = df_post['new_text'].progress_apply(TextPreprocessing.stemming_and_lemmatization_v2, duration_log=False) # стемминг для русского
+# стоп слова
+df_post['new_text']  = df_post['new_text'].progress_apply(TextPreprocessing.remove_Stopwords, duration_log=False)  # работают для русского
+
+df_post['new_text']  = df_post['new_text'].progress_apply(TextPreprocessing.clean_extra_spaces, duration_log=False)
 
 
 df_post['len'] = df_post['new_text'].str.strip().str.len()
@@ -216,8 +198,8 @@ test_input_ids = pad_sequences(test_input_ids, maxlen=MAX_LEN, dtype="long", val
 test_attention_masks = create_attention_masks(test_input_ids)
 
 #Create train and test datasets
-BATCH_SIZE=2
-NR_EPOCHS=20
+BATCH_SIZE=16
+NR_EPOCHS=25
 
 
 #Define f1 functions for evaluation
@@ -296,7 +278,6 @@ model.fit(np.array(train_input_ids), one_hot_labels, verbose = 1, epochs = NR_EP
 #                           ТЕСТИРОВАНИЕ
 
 test_data['type_index'] = df_new['Subject'].apply(get_type_index)
-test_data
 test_labels = tf.keras.utils.to_categorical(test_data.type_index.values, num_classes=len(psychotypes))
 model.evaluate(np.array(test_input_ids), test_labels)
 
@@ -307,7 +288,7 @@ cols = cols.tolist()
 colnames = ['sentence']
 colnames = colnames+cols
 
-df_predict = pd.DataFrame(columns = colnames)
+df_predict = pd.DataFrame(columns=colnames)
 sentence = "Time to debate on it. Strike at the weakest point and make others cry with facts"
 
 df_predict.loc[0, 'sentence'] = sentence
@@ -315,6 +296,4 @@ sentence_inputs = tokenize_sentences(df_predict['sentence'], tokenizer, MAX_LEN)
 sentence_inputs = pad_sequences(sentence_inputs, maxlen=MAX_LEN, dtype="long", value=0, truncating="post", padding="post")
 prediction = model.predict(np.array(sentence_inputs))
 df_predict.loc[0, cols] = prediction
-
-df_predict
-
+print()

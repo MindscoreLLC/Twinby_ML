@@ -14,9 +14,9 @@ import ru_core_news_md
 nlp = ru_core_news_md.load()
 
 import os
-# загрузка стоп-слов
-file = open('libs/stopwords_russian.txt', 'r', encoding='utf-8')
 
+# загрузка стоп-слов
+file              = open('libs/stopwords_russian.txt', 'r', encoding='utf-8')
 russian_stopwords = file.read().split()
 file.close()
 
@@ -214,27 +214,15 @@ class TextPreprocessing:
             return df_modified
         else:
             return comparison
-        
 
     @staticmethod
     @time_log
-    def clean_stop_words_from_sentences(df):
-        russian_stop_words = stopwords.words('russian') + russian_stopwords 
-        modified_df = df.copy()
-        def delete_stop_words_from_sentence(sentence: str) -> str:
-            return ' '.join([word for word in sentence.split() if re.sub(r'[^А-Яа-яЁё]+', ' ', word) not in russian_stop_words])
-        modified_df['desc'] = modified_df['desc'].apply(lambda one_desc: [delete_stop_words_from_sentence(sentence) for sentence in one_desc])
-        return modified_df
-    
-    
-    @staticmethod
-    @time_log
-    @process_text_in_df
-    def clean_stop_words(text_obj):
-        russian_stop_words = stopwords.words('russian') + russian_stopwords 
-        return ' '.join([word for word in text_obj.split() if re.sub(r'[^А-Яа-яЁё]+', ' ', word) not in russian_stop_words])
+    def remove_Stopwords(text):
+        stop_words = set(stopwords.words('russian')) | set(stopwords.words('english')) | set(russian_stopwords)
+        words = word_tokenize(text.lower())
+        sentence = [w for w in words if not w in stop_words]
+        return " ".join(sentence)
 
-    
     @staticmethod
     @time_log
     @process_text_in_df
