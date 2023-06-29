@@ -121,7 +121,16 @@ class TextPreprocessing:
            используется декоратор CreationBagWords.process_text_in_df, благодаря которому в данный метод
            будет передана строка, даже если при ее вызове был указан датафрейм в качестве параметра text_obj 
         '''
-        return re.sub(r'[^А-Яа-яЁёA-Za-z0-9 ]+', '', text_obj)
+        return re.sub(r'[^А-Яа-яЁёA-Za-z0-9 ]+', ' ', text_obj)
+    
+    
+    @staticmethod
+    @time_log
+    @process_text_in_df
+    def clean_extra_spaces(text_obj):
+        '''очистка текста от лишних пробелов (в начале и конце строки, множественные пробелы в середине строки будут заменены на 1 пробел)
+        '''
+        return re.sub(' +', ' ', text_obj).strip()
         
 
     @staticmethod
