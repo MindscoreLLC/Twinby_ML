@@ -129,17 +129,18 @@ post_train, post_test, label_train, label_test = train_test_split(posts, label, 
 
 
 def delete_part_of_speech(word):
-    for p in ['_NOUN', '_ADJ', '_VERB', '_PROPN', '_ADV']:
+    for p in ['_NOUN', '_ADJ', '_VERB', '_PROPN', '_ADV', '_NUM', '_X', '_INTJ', '_SYM']:
         word = word.replace(p, '')
     return word
 #                                        ЗАГРУЖАЕМ ВЕКТОРА Glove
 embeddings_book = {
     'glove_300': {'path': 'experiments/data/glove.6B.300d.txt', 'dim': 300},
-    'navec': {'path': 'experiments/data/navec_hudlit_v1_12B_500K_300d_100q.tar', 'dim': 300}
+    'navec': {'path': 'experiments/data/navec_hudlit_v1_12B_500K_300d_100q.tar', 'dim': 300},
+    'russian_news': {'path': 'experiments/data/russian_news.txt', 'dim': 300},
 }
-selected  = 'glove_300'
+selected  = 'russian_news'
 word_list = []
-if selected in ['glove_300']:
+if selected in ['glove_300', 'russian_news']:
     trained_embeddings = {}
     with open(embeddings_book[selected]['path'], encoding='utf-8') as file:
         for line in file.readlines():
@@ -157,7 +158,7 @@ word_list = word_list[word_list.str.split('_').apply(len) > 1]
 display(word_list.apply(lambda x: x.split('_')[-1]).value_counts())
 
 # ТОКЕНЕЗАЦИЯ СЛОВ
-max_words = 10000
+max_words = 20000
 max_len   = 400
 tokenizer = text.Tokenizer(num_words=max_words)
 # составляем словарь слов (на обучающей выборке)
@@ -180,16 +181,18 @@ emb_dim   = embeddings_book[selected]['dim']
 
 embedding_matrix = np.zeros((max_words, emb_dim))
 # unknown          = trained_embeddings.get('<unk>') # 0, 0, 0...
+unknown_words = 0
 for word, idx in word_index.items():
     if idx < max_words:
         # получаем вектора на слово из словаря токенезатора
         embedding_vector = trained_embeddings.get(word, None)
         if embedding_vector is not None:
             embedding_matrix[idx] = embedding_vector
+        else:
+            unknown_words += 1
         # elif unknown:
         #     embedding_matrix[idx] = unknown
-
-
+print(unknown_words)
 # МОДЕЛЬ
 lstm_model = tf.keras.Sequential()
 lstm_model.add(tf.keras.layers.Embedding(max_words, emb_dim, trainable=False, weights=[embedding_matrix]))
