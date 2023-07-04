@@ -136,14 +136,15 @@ def delete_part_of_speech(word):
 # путь к предобученным векторам и их размерность
 embeddings_book = {
     'glove_300': {'path': 'experiments/data/glove.6B.300d.txt', 'dim': 300},
+    'glove_100_twitter_multy-lang': {'path': 'experiments/data/glove.twitter.27B.100d.txt', 'dim': 100},
     'navec': {'path': 'experiments/data/navec_hudlit_v1_12B_500K_300d_100q.tar', 'dim': 300},
     'russian_news': {'path': 'experiments/data/russian_news.txt', 'dim': 300},
-    'fasttext_rus_300': {'path': 'experiments/data/cc.ru.300.vec', 'dim': 300}  # fasttext может не хватить ОЗУ
+    'fasttext_rus_300': {'path': 'experiments/data/cc.ru.300.vec', 'dim': 300}  # может не хватить ОЗУ
 }
-selected  = 'fasttext_rus_300'
+selected  = 'glove_100_twitter_multy-lang'
 # читаем из файла (структура у них одинакова на каждой строке массив значений, разделенных проблеами,
 # первое значение - слово, остальное - его вектор)
-if selected in ['glove_300', 'russian_news', 'fasttext_rus_300']:
+if selected in ['glove_300', 'glove_100_twitter_multy-lang', 'russian_news', 'fasttext_rus_300']:
     trained_embeddings = {}
     with open(embeddings_book[selected]['path'], encoding='utf-8') as file:
         lines = file.readlines()
@@ -204,7 +205,8 @@ lstm_model = tf.keras.Sequential()
 lstm_model.add(tf.keras.layers.Embedding(max_words, emb_dim, trainable=False, weights=[embedding_matrix]))
 lstm_model.add(tf.keras.layers.LSTM(128, return_sequences=False))
 lstm_model.add(tf.keras.layers.Dropout(0.5))
-lstm_model.add(tf.keras.layers.Dense(7, activation = 'sigmoid'))
+# слой предсказания результата (по 1 unit па психотип), рассчитывается вероятность каждого
+lstm_model.add(tf.keras.layers.Dense(len(psychotypes), activation = 'sigmoid'))
 lstm_model.compile(loss='categorical_crossentropy', optimizer='adam', metrics=['accuracy'])
 print(lstm_model.summary())
 
