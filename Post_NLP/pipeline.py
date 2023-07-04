@@ -141,27 +141,29 @@ embeddings_book = {
     'russian_news': {'path': 'experiments/data/russian_news.txt', 'dim': 300},
     'fasttext_rus_300': {'path': 'experiments/data/cc.ru.300.vec', 'dim': 300}  # может не хватить ОЗУ
 }
-selected  = 'glove_100_twitter_multy-lang'
-# читаем из файла (структура у них одинакова на каждой строке массив значений, разделенных проблеами,
-# первое значение - слово, остальное - его вектор)
-if selected in ['glove_300', 'glove_100_twitter_multy-lang', 'russian_news', 'fasttext_rus_300']:
-    trained_embeddings = {}
-    with open(embeddings_book[selected]['path'], encoding='utf-8') as file:
-        lines = file.readlines()
-        # для fasttext не нужна первая строка файла, содержит метаданные
-        # проверяем по числу значений в строке (если < размерности вектора => не вектор)
-        if len(lines[0].split()) < embeddings_book[selected]['dim']:
-            lines = lines[1:]
-        # формируем словарь векторов
-        for line in lines:
-            values = line.split()
-            word   = delete_part_of_speech(values[0])  # отбрасываем _NOUN, _PREP, итд
-            trained_embeddings[word] = np.array(values[1:])
-    print(len(trained_embeddings))
-elif selected == 'navec':
-    trained_embeddings = Navec.load(embeddings_book[selected]['path'])
-else:
-    raise Exception("Не определен способ загрузки")
+selected  = 'fasttext_rus_300'
+
+#              чтение всех векторов сразу (теперь не нужно, так как способ с пачками использует меньше ОЗУ)
+# # читаем из файла (структура у них одинакова на каждой строке массив значений, разделенных проблеами,
+# # первое значение - слово, остальное - его вектор)
+# if selected in ['glove_300', 'glove_100_twitter_multy-lang', 'russian_news', 'fasttext_rus_300']:
+#     trained_embeddings = {}
+#     with open(embeddings_book[selected]['path'], encoding='utf-8') as file:
+#         lines = file.readlines()
+#         # для fasttext не нужна первая строка файла, содержит метаданные
+#         # проверяем по числу значений в строке (если < размерности вектора => не вектор)
+#         if len(lines[0].split()) < embeddings_book[selected]['dim']:
+#             lines = lines[1:]
+#         # формируем словарь векторов
+#         for line in lines:
+#             values = line.split()
+#             word   = delete_part_of_speech(values[0])  # отбрасываем _NOUN, _PREP, итд
+#             trained_embeddings[word] = np.array(values[1:])
+#     print(len(trained_embeddings))
+# elif selected == 'navec':
+#     trained_embeddings = Navec.load(embeddings_book[selected]['path'])
+# else:
+#     raise Exception("Не определен способ загрузки")
 
 
 # ТОКЕНЕЗАЦИЯ СЛОВ
@@ -179,6 +181,38 @@ xtest_seq  = tokenizer.texts_to_sequences(post_test)
 xtrain_pad = sequence.pad_sequences(xtrain_seq, maxlen=max_len)
 xtest_pad  = sequence.pad_sequences(xtest_seq, maxlen=max_len)
 word_index = tokenizer.word_index
+
+# список слов словаря. множество для более быстрой проверки наличия, x25 по сравнению с проверкой in word_index.values()
+existing_words = set(word_index.keys())
+#               читаем из файла предобученные векторы для СЛОВ ИЗ СЛОВАРЯ пачками (для оптимизации памяти)
+# читаем из файла (структура у них одинакова на каждой строке массив значений, разделенных проблеами,
+# первое значение - слово, остальное - его вектор)
+if selected in ['glove_300', 'glove_100_twitter_multy-lang', 'russian_news', 'fasttext_rus_300']:
+    trained_embeddings = {}
+    with open(embeddings_book[selected]['path'], encoding='utf-8') as file:
+        while True:
+            lines = file.readlines(2**30)  # 1GB batches
+            if not lines:
+                break
+            print(len(lines))
+            # для fasttext не нужна первая строка файла, содержит метаданные
+            # проверяем по числу значений в строке (если < размерности вектора => не вектор)
+            if len(lines[0].split()) < embeddings_book[selected]['dim']:
+                lines = lines[1:]
+            # формируем словарь векторов
+            for line in tqdm(lines):
+                values = line.split()
+                word   = delete_part_of_speech(values[0])  # отбрасываем _NOUN, _PREP, итд
+                # если слово есть в наших текстах - сохраняем для него вектор
+                if word in existing_words:
+                    trained_embeddings[word] = np.array(values[1:])
+    print(len(trained_embeddings))
+elif selected == 'navec':
+    # можно использовать все, т.к. занимает мало места, читается иначе
+    trained_embeddings = Navec.load(embeddings_book[selected]['path'])
+else:
+    raise Exception("Не определен способ загрузки")
+
 
 
 # ЗАГРУЖАЕМ ВЕСА ДЛЯ ВСТРЕЧАЮЩИХСЯ В ТЕКСТЕ СЛОВ
