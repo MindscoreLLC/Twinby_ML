@@ -139,23 +139,19 @@ embeddings_book = {
     'russian_news': {'path': 'experiments/data/russian_news.txt', 'dim': 300},
 }
 selected  = 'navec'
-word_list = []
 if selected in ['glove_300', 'russian_news']:
     trained_embeddings = {}
     with open(embeddings_book[selected]['path'], encoding='utf-8') as file:
         for line in file.readlines():
             values = line.split()
             word   = delete_part_of_speech(values[0])  # отбрасываем _NOUN, _PREP, итд
-            word_list.append(word)
             trained_embeddings[word] = np.array(values[1:])
     print(len(trained_embeddings))
 elif selected == 'navec':
     trained_embeddings = Navec.load(embeddings_book[selected]['path'])
 else:
     raise Exception("Не определен способ загрузки")
-word_list = pd.Series(word_list)
-word_list = word_list[word_list.str.split('_').apply(len) > 1]
-display(word_list.apply(lambda x: x.split('_')[-1]).value_counts())
+
 
 # ТОКЕНЕЗАЦИЯ СЛОВ
 max_words = 20000
