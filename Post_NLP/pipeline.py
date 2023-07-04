@@ -27,92 +27,93 @@ from psycopg import Connection
 #                           ИСХОДНЫЕ ДАННЫЕ
 
 
-
-uri = 'postgresql://twin:58er2504Vb@85.172.79.228:5432/dwh'
-
-with Connection.connect(uri, autocommit=True) as connection:
-    with connection.cursor() as cursor:
-        # проверяем наличие схемы "public" в бд
-        cursor.execute('''
-            SELECT
-         Entrypoint.client_id
-        ,Profile.params
-        ,Feature.name
-
-        FROM "Entrypoint" as Entrypoint
-        inner join "Profile" as Profile ON
-            Profile.entrypoint_id = Entrypoint.entrypoint_id
-        inner join "Feature" as Feature ON
-            Feature.id = Profile.feature_id
-
-        where
-            Entrypoint.datasource_id = 2 AND Feature.name = 'id'
-        ''')
-        df_profile = pd.DataFrame(cursor.fetchall(), columns=list(map(lambda x: x.name, cursor.description)))
-        cursor.execute('''
-            SELECT
-         Entrypoint.client_id
-        ,Post.owner_id
-        ,Post.text::json->'text' as text
-
-        FROM "Entrypoint" as Entrypoint
-        inner join "Post" as Post ON
-            Post.entrypoint_id = Entrypoint.entrypoint_id
-        WHERE
-            Entrypoint.datasource_id = 2 and Post.type = 'items'
-        ''')
-        df_post = pd.DataFrame(cursor.fetchall(), columns=list(map(lambda x: x.name, cursor.description)))
-display(df_post.head(3))
-display(df_profile.head(3))
+#
+# uri = 'postgresql://twin:58er2504Vb@85.172.79.228:5432/dwh'
+#
+# with Connection.connect(uri, autocommit=True) as connection:
+#     with connection.cursor() as cursor:
+#         # проверяем наличие схемы "public" в бд
+#         cursor.execute('''
+#             SELECT
+#          Entrypoint.client_id
+#         ,Profile.params
+#         ,Feature.name
+#
+#         FROM "Entrypoint" as Entrypoint
+#         inner join "Profile" as Profile ON
+#             Profile.entrypoint_id = Entrypoint.entrypoint_id
+#         inner join "Feature" as Feature ON
+#             Feature.id = Profile.feature_id
+#
+#         where
+#             Entrypoint.datasource_id = 2 AND Feature.name = 'id'
+#         ''')
+#         df_profile = pd.DataFrame(cursor.fetchall(), columns=list(map(lambda x: x.name, cursor.description)))
+#         cursor.execute('''
+#             SELECT
+#          Entrypoint.client_id
+#         ,Post.owner_id
+#         ,Post.text::json->'text' as text
+#
+#         FROM "Entrypoint" as Entrypoint
+#         inner join "Post" as Post ON
+#             Post.entrypoint_id = Entrypoint.entrypoint_id
+#         WHERE
+#             Entrypoint.datasource_id = 2 and Post.type = 'items'
+#         ''')
+#         df_post = pd.DataFrame(cursor.fetchall(), columns=list(map(lambda x: x.name, cursor.description)))
+# display(df_post.head(3))
+# display(df_profile.head(3))
 
 #                           ПСИХОТИПЫ
 psychotypes    = list('ABCDEFG')
 # количество возможных классов (психотипов)
 NUM_CLASSES    = len(psychotypes)
 
-df_psychotypes = df_profile[['client_id']].drop_duplicates()
-df_psychotypes['Subject'] = np.random.choice(psychotypes, df_psychotypes.shape[0])
-
-# оставляем идентфиикатор
-df_profile = df_profile[['client_id', 'params']].rename(columns={'params': 'user_id'})
-
-display(df_psychotypes)
-display(df_post.shape)
-display(df_post.merge(df_profile, on='client_id'))
-
-df_post = df_post.merge(df_profile, on='client_id').query("owner_id == user_id")#.iloc[:50000]
-display(df_post.shape)
-df_post = df_post.merge(df_psychotypes, on='client_id')#[['text', 'Subject']]
-display(df_post.shape)
+# df_psychotypes = df_profile[['client_id']].drop_duplicates()
+# df_psychotypes['Subject'] = np.random.choice(psychotypes, df_psychotypes.shape[0])
+#
+# # оставляем идентфиикатор
+# df_profile = df_profile[['client_id', 'params']].rename(columns={'params': 'user_id'})
+#
+# display(df_psychotypes)
+# display(df_post.shape)
+# display(df_post.merge(df_profile, on='client_id'))
+#
+# df_post = df_post.merge(df_profile, on='client_id').query("owner_id == user_id")#.iloc[:50000]
+# display(df_post.shape)
+# df_post = df_post.merge(df_psychotypes, on='client_id')#[['text', 'Subject']]
+# display(df_post.shape)
 
 # #                           ПРЕДОБРАБОТКА
 
 
-# приведение к одному формату
-df_post['new_text']  = df_post['text'].progress_apply(TextPreprocessing.clean_format, duration_log=False)
-# удаление тегов html
-df_post['new_text']  = df_post['new_text'].progress_apply(TextPreprocessing.clean_html, duration_log=False)
-# удаление спец символов html
-df_post['new_text']  = df_post['new_text'].progress_apply(TextPreprocessing.clean_html_special_characters_v2, duration_log=False)
+# # приведение к одному формату
+# df_post['new_text']  = df_post['text'].progress_apply(TextPreprocessing.clean_format, duration_log=False)
+# # удаление тегов html
+# df_post['new_text']  = df_post['new_text'].progress_apply(TextPreprocessing.clean_html, duration_log=False)
+# # удаление спец символов html
+# df_post['new_text']  = df_post['new_text'].progress_apply(TextPreprocessing.clean_html_special_characters_v2, duration_log=False)
+#
+# # знаки препинания
+# df_post['new_text']  = df_post['new_text'].progress_apply(TextPreprocessing.clean_text_total, duration_log=False)  # знаки препинания удаляются во всех языках
+#
+# # леммматизация (ускорить, возможно есть другая модель не для английского вместо stemSentence)
+# df_post['new_text']  = df_post['new_text'].progress_apply(TextPreprocessing.stemming_and_lemmatization_v2, duration_log=False) # стемминг для русского
+# # удаление лишних пробелов
+# df_post['new_text']  = df_post['new_text'].progress_apply(TextPreprocessing.clean_extra_spaces, duration_log=False)
+#
+# # стоп слова
+# df_post['new_text']  = df_post['new_text'].progress_apply(TextPreprocessing.remove_Stopwords, duration_log=False)
+#
+# df_post['len'] = df_post['new_text'].str.strip().str.len()
+# # отбрасываем пустые посты
+# df_post = df_post[df_post['len'] > 0].sort_values('len', ascending=False)
+# display(df_post.shape)
 
-# знаки препинания
-df_post['new_text']  = df_post['new_text'].progress_apply(TextPreprocessing.clean_text_total, duration_log=False)  # знаки препинания удаляются во всех языках
 
-# леммматизация (ускорить, возможно есть другая модель не для английского вместо stemSentence)
-df_post['new_text']  = df_post['new_text'].progress_apply(TextPreprocessing.stemming_and_lemmatization_v2, duration_log=False) # стемминг для русского
-# удаление лишних пробелов
-df_post['new_text']  = df_post['new_text'].progress_apply(TextPreprocessing.clean_extra_spaces, duration_log=False)
-
-# стоп слова
-df_post['new_text']  = df_post['new_text'].progress_apply(TextPreprocessing.remove_Stopwords, duration_log=False)
-
-df_post['len'] = df_post['new_text'].str.strip().str.len()
-# отбрасываем пустые посты
-df_post = df_post[df_post['len'] > 0].sort_values('len', ascending=False)
-display(df_post.shape)
-
-
-
+df_post = pd.read_csv('df_post_preprocessed.csv')
+df_post
 
 #                           СБОР ПОСТОВ НА КАЖДОГО ПОЛЬЗОВАТЕЛЯ
 # собираем все посты по пользвоател без дубликатов (одинаковый текст постов исклюячаестя)
@@ -134,7 +135,7 @@ embeddings_book = {
 selected = 'glove_300'
 if selected in ['glove_300']:
     trained_embeddings = {}
-    with open('', encoding='utf-8') as file:
+    with open(embeddings_book[selected]['path'], encoding='utf-8') as file:
         for line in file.readlines():
             values = line.split()
             word   = '_'.join(values[0].split('_')[:-1])  # отбрасываем _NOUN, _PREP, итд
