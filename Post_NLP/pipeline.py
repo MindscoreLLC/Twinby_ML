@@ -138,7 +138,7 @@ embeddings_book = {
     'glove_300': {'path': 'experiments/data/glove.6B.300d.txt', 'dim': 300},
     'navec': {'path': 'experiments/data/navec_hudlit_v1_12B_500K_300d_100q.tar', 'dim': 300},
     'russian_news': {'path': 'experiments/data/russian_news.txt', 'dim': 300},
-    'fasttext_rus_300': {'path': 'experiments/data/cc.ru.300.vec', 'dim': 300}
+    'fasttext_rus_300': {'path': 'experiments/data/cc.ru.300.vec', 'dim': 300}  # fasttext может не хватить ОЗУ
 }
 selected  = 'fasttext_rus_300'
 # читаем из файла (структура у них одинакова на каждой строке массив значений, разделенных проблеами,
