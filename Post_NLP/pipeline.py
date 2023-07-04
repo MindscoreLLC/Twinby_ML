@@ -127,25 +127,34 @@ posts  = df_new['new_text']
 label  = df_new[psychotypes]
 post_train, post_test, label_train, label_test = train_test_split(posts, label, test_size=0.2, random_state=123)
 
+
+def delete_part_of_speech(word):
+    for p in ['_NOUN', '_ADJ', '_VERB', '_PROPN', '_ADV']:
+        word = word.replace(p, '')
+    return word
 #                                        ЗАГРУЖАЕМ ВЕКТОРА Glove
 embeddings_book = {
     'glove_300': {'path': 'experiments/data/glove.6B.300d.txt', 'dim': 300},
     'navec': {'path': 'experiments/data/navec_hudlit_v1_12B_500K_300d_100q.tar', 'dim': 300}
 }
-selected = 'glove_300'
+selected  = 'glove_300'
+word_list = []
 if selected in ['glove_300']:
     trained_embeddings = {}
     with open(embeddings_book[selected]['path'], encoding='utf-8') as file:
         for line in file.readlines():
             values = line.split()
-            word   = '_'.join(values[0].split('_')[:-1])  # отбрасываем _NOUN, _PREP, итд
+            word   = delete_part_of_speech(values[0])  # отбрасываем _NOUN, _PREP, итд
+            word_list.append(word)
             trained_embeddings[word] = np.array(values[1:])
     print(len(trained_embeddings))
 elif selected == 'navec':
     trained_embeddings = Navec.load(embeddings_book)
 else:
     raise Exception("Не определен способ загрузки")
-
+word_list = pd.Series(word_list)
+word_list = word_list[word_list.str.split('_').apply(len) > 1]
+display(word_list.apply(lambda x: x.split('_')[-1]).value_counts())
 
 # ТОКЕНЕЗАЦИЯ СЛОВ
 max_words = 10000
