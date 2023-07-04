@@ -182,8 +182,7 @@ xtrain_pad = sequence.pad_sequences(xtrain_seq, maxlen=max_len)
 xtest_pad  = sequence.pad_sequences(xtest_seq, maxlen=max_len)
 word_index = tokenizer.word_index
 
-# список слов словаря. множество для более быстрой проверки наличия, x25 по сравнению с проверкой in word_index.values()
-existing_words = set(word_index.keys())
+
 #               читаем из файла предобученные векторы для СЛОВ ИЗ СЛОВАРЯ пачками (для оптимизации памяти)
 # читаем из файла (структура у них одинакова на каждой строке массив значений, разделенных проблеами,
 # первое значение - слово, остальное - его вектор)
@@ -204,7 +203,7 @@ if selected in ['glove_300', 'glove_100_twitter_multy-lang', 'russian_news', 'fa
                 values = line.split()
                 word   = delete_part_of_speech(values[0])  # отбрасываем _NOUN, _PREP, итд
                 # если слово есть в наших текстах - сохраняем для него вектор
-                if word in existing_words:
+                if word in word_index:
                     trained_embeddings[word] = np.array(values[1:])
     print(len(trained_embeddings))
 elif selected == 'navec':
@@ -240,11 +239,9 @@ lstm_model.add(tf.keras.layers.Embedding(max_words, emb_dim, trainable=False, we
 lstm_model.add(tf.keras.layers.LSTM(128, return_sequences=False))
 lstm_model.add(tf.keras.layers.Dropout(0.5))
 # слой предсказания результата (по 1 unit па психотип), рассчитывается вероятность каждого
-lstm_model.add(tf.keras.layers.Dense(len(psychotypes), activation = 'sigmoid'))
+lstm_model.add(tf.keras.layers.Dense(len(psychotypes), activation='sigmoid'))
 lstm_model.compile(loss='categorical_crossentropy', optimizer='adam', metrics=['accuracy'])
 print(lstm_model.summary())
-
-
 
 batch_size = 64
 epochs     = 10
