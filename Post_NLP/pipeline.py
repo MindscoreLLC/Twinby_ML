@@ -133,16 +133,26 @@ def delete_part_of_speech(word):
         word = word.replace(p, '')
     return word
 #                                        ЗАГРУЖАЕМ ВЕКТОРА Glove
+# путь к предобученным векторам и их размерность
 embeddings_book = {
     'glove_300': {'path': 'experiments/data/glove.6B.300d.txt', 'dim': 300},
     'navec': {'path': 'experiments/data/navec_hudlit_v1_12B_500K_300d_100q.tar', 'dim': 300},
     'russian_news': {'path': 'experiments/data/russian_news.txt', 'dim': 300},
+    'fasttext_rus_300': {'path': 'experiments/data/cc.ru.300.vec', 'dim': 300}
 }
-selected  = 'navec'
-if selected in ['glove_300', 'russian_news']:
+selected  = 'fasttext_rus_300'
+# читаем из файла (структура у них одинакова на каждой строке массив значений, разделенных проблеами,
+# первое значение - слово, остальное - его вектор)
+if selected in ['glove_300', 'russian_news', 'fasttext_rus_300']:
     trained_embeddings = {}
     with open(embeddings_book[selected]['path'], encoding='utf-8') as file:
-        for line in file.readlines():
+        lines = file.readlines()
+        # для fasttext не нужна первая строка файла, содержит метаданные
+        # проверяем по числу значений в строке (если < размерности вектора => не вектор)
+        if len(lines[0].split()) < embeddings_book[selected]['dim']:
+            lines = lines[1:]
+        # формируем словарь векторов
+        for line in lines:
             values = line.split()
             word   = delete_part_of_speech(values[0])  # отбрасываем _NOUN, _PREP, итд
             trained_embeddings[word] = np.array(values[1:])
