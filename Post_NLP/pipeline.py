@@ -247,7 +247,7 @@ batch_size = 64
 epochs     = 10
 history    = lstm_model.fit(xtrain_pad, np.asarray(label_train), validation_data=(xtest_pad, np.asarray(label_test)), batch_size=batch_size, epochs=epochs)
 
-train_lstm_results = lstm_model.evaluate(xtrain_pad, np.asarray(label_test), verbose=0, batch_size=256)
+train_lstm_results = lstm_model.evaluate(xtest_pad, np.asarray(label_test), verbose=0, batch_size=256)
 
 K.clear_session()
 
