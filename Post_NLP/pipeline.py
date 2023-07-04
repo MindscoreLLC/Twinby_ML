@@ -138,7 +138,7 @@ embeddings_book = {
     'navec': {'path': 'experiments/data/navec_hudlit_v1_12B_500K_300d_100q.tar', 'dim': 300},
     'russian_news': {'path': 'experiments/data/russian_news.txt', 'dim': 300},
 }
-selected  = 'russian_news'
+selected  = 'navec'
 word_list = []
 if selected in ['glove_300', 'russian_news']:
     trained_embeddings = {}
@@ -150,7 +150,7 @@ if selected in ['glove_300', 'russian_news']:
             trained_embeddings[word] = np.array(values[1:])
     print(len(trained_embeddings))
 elif selected == 'navec':
-    trained_embeddings = Navec.load(embeddings_book)
+    trained_embeddings = Navec.load(embeddings_book[selected]['path'])
 else:
     raise Exception("Не определен способ загрузки")
 word_list = pd.Series(word_list)
