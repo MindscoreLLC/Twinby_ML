@@ -170,14 +170,15 @@ word_index = tokenizer.word_index
 emb_dim   = embeddings_book[selected]['dim']
 
 embedding_matrix = np.zeros((max_words, emb_dim))
+# unknown          = trained_embeddings.get('<unk>') # 0, 0, 0...
 for word, idx in word_index.items():
     if idx < max_words:
         # получаем вектора на слово из словаря токенезатора
         embedding_vector = trained_embeddings.get(word, None)
         if embedding_vector is not None:
             embedding_matrix[idx] = embedding_vector
-        else:
-            embedding_matrix[idx].get('<unk>')
+        # elif unknown:
+        #     embedding_matrix[idx] = unknown
 
 
 # МОДЕЛЬ
