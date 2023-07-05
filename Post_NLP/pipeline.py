@@ -98,10 +98,13 @@ df_post['new_text']  = df_post['new_text'].progress_apply(TextPreprocessing.clea
 
 # длина текста в символах
 df_post['len']              = df_post['new_text'].str.len()
-# доля самого часто встречающегося в тексте символа
-df_post['max_symbol_share'] = df_post['new_text'].apply(lambda x: max(Counter(x).values())) / df_post['len']
 # отбрасываем пустые посты
 df_post = df_post[df_post['len'] > 0].sort_values('len', ascending=False)
+
+
+# доля самого часто встречающегося в тексте символа
+df_post['max_symbol_share'] = df_post['new_text'].apply(lambda x: max(Counter(x).values())) / df_post['len']
+
 # отбрасываем посты, состоящие на >= 40% из одного символа и они длиннее 100 символов (рисунки, длинные "АХАХ", итд)
 df_post = df_post[(df_post['len'] < 100) | (df_post['max_symbol_share'] < 0.4)]
 display(df_post.shape)
