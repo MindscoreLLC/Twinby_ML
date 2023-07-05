@@ -1,31 +1,28 @@
 import re
 import pandas as pd
-import nltk
 import pymorphy2
-# import spacy
+import contractions
 
 from time import time
 from nltk.tokenize import sent_tokenize, word_tokenize
 from bs4 import BeautifulSoup
 from nltk.corpus import stopwords
 from nltk.stem import snowball
-import spacy
+
 import ru_core_news_md
 nlp = ru_core_news_md.load()
 
-import os
-
 # загрузка стоп-слов
-file              = open('libs/stopwords_russian.txt', 'r', encoding='utf-8')
-russian_stopwords = file.read().split()
-file.close()
+with open('libs/stopwords_russian.txt', encoding='utf-8') as file:
+    russian_stopwords = set(file.read().split())
 
 # загрузка html спец-символов
-file = open('libs/html_special_characters.txt', 'r', encoding='utf-8')
-html_special_characters = file.read().split()
-file.close()
+with open('libs/html_special_characters.txt', encoding='utf-8') as file:
+    html_special_characters = set(file.read().split())
 
-
+# слова-сокращения в русском
+with open('libs/short_constructions.txt', encoding='utf-8') as file:
+    short_constructions = set(file.read().split())
 
 
 class TextPreprocessing:
@@ -227,6 +224,19 @@ class TextPreprocessing:
         words = word_tokenize(text.lower())
         sentence = [w for w in words if not w in stop_words]
         return " ".join(sentence)
+
+    @staticmethod
+    @time_log
+    def clean_short_constructions(text):
+        """Удаление сокращений из текста"""
+        words = []
+        for word in word_tokenize(text):
+            # проверяем наличие слова в списке русских сокращений (если есть - ничего не делаем)
+            if word not in short_constructions:
+                # исправляем слово с библиотекой для раскрытия английских сокращений (не скоращения - не меняется)
+                words.append(contractions.fix(word))
+        return " ".join(words)
+
 
     @staticmethod
     @time_log
