@@ -21,7 +21,7 @@ from tqdm import tqdm
 tqdm.pandas()
 
 from psycopg import Connection
-
+from collections import Counter
 
 #                           ИСХОДНЫЕ ДАННЫЕ
 
@@ -72,54 +72,45 @@ NUM_CLASSES    = len(psychotypes)
 df_psychotypes = df_profile[['client_id']].drop_duplicates()
 df_psychotypes['Subject'] = np.random.choice(psychotypes, df_psychotypes.shape[0])
 
-# оставляем идентфиикатор
+# user_id для определения авторства постов
 df_profile = df_profile[['client_id', 'params']].rename(columns={'params': 'user_id'})
-
-display(df_psychotypes)
-display(df_post.shape)
-display(df_post.merge(df_profile, on='client_id'))
-
-df_post = df_post.merge(df_profile, on='client_id').query("owner_id == user_id")#.iloc[:50000]
-display(df_post.shape)
-df_post = df_post.merge(df_psychotypes, on='client_id')#[['text', 'Subject']]
+df_post    = df_post.merge(df_profile, on='client_id').query("owner_id == user_id")
+# присоединяем психотипы
+df_post    = df_post.merge(df_psychotypes, on='client_id')
 display(df_post.shape)
 
 # #                           ПРЕДОБРАБОТКА
-
-
-# приведение к одному формату
-df_post['new_text']  = df_post['text'].progress_apply(TextPreprocessing.clean_format, duration_log=False)
-# удаление тегов html
-df_post['new_text']  = df_post['new_text'].progress_apply(TextPreprocessing.clean_html, duration_log=False)
-# удаление спец символов html
-df_post['new_text']  = df_post['new_text'].progress_apply(TextPreprocessing.clean_html_special_characters_v2, duration_log=False)
-
-# удаление ссылок и адресов электронной почты
-df_post['new_text']  = df_post['new_text'].progress_apply(TextPreprocessing.clean_url_and_email, duration_log=False)
-
-# очистка сокращений
-df_post['new_text']  = df_post['new_text'].progress_apply(TextPreprocessing.clean_short_constructions, duration_log=False)
-
-# очистка текста от всего, кроме букв, пробелов и тире(если оно стоит между буквами)
-df_post['new_text']  = df_post['new_text'].progress_apply(TextPreprocessing.clean_text_total, duration_log=False)
+# очистка текста
+# 1) приведение к нижнесму регистру
+# 2) html-теги, спец символы html, ссылки и email удаляются
+# 3) сокращения на русском и английском удаляются
+# 4) все небуквенные символы (за исключением тире в составе слова) удаляются
+df_post['new_text'] = df_post['text'].progress_apply(TextPreprocessing.clean_text)
 
 # леммматизация
-df_post['new_text']  = df_post['new_text'].progress_apply(TextPreprocessing.lemmatization_v2, duration_log=False)
+df_post['new_text']  = df_post['new_text'].progress_apply(TextPreprocessing.lemmatization)
 
 # стоп слова
-df_post['new_text']  = df_post['new_text'].progress_apply(TextPreprocessing.remove_Stopwords, duration_log=False)
+df_post['new_text']  = df_post['new_text'].progress_apply(TextPreprocessing.remove_stopwords)
 
 # удаление лишних пробелов
-df_post['new_text']  = df_post['new_text'].progress_apply(TextPreprocessing.clean_extra_spaces, duration_log=False)
+df_post['new_text']  = df_post['new_text'].progress_apply(TextPreprocessing.clean_extra_spaces)
 
-df_post['len'] = df_post['new_text'].str.strip().str.len()
+# длина текста в символах
+df_post['len']              = df_post['new_text'].str.len()
+# доля самого часто встречающегося в тексте символа
+df_post['max_symbol_share'] = df_post['new_text'].apply(lambda x: max(Counter(x).values())) / df_post['len']
 # отбрасываем пустые посты
 df_post = df_post[df_post['len'] > 0].sort_values('len', ascending=False)
+# отбрасываем посты, состоящие на >= 40% из одного символа и они длиннее 100 символов (рисунки, длинные "АХАХ", итд)
+df_post = df_post[(df_post['len'] < 100) | (df_post['max_symbol_share'] < 0.4)]
 display(df_post.shape)
 
 df_post.to_csv('df_post_preprocessed.csv', index=False)
-# df_post = pd.read_csv('df_post_preprocessed.csv')
-# df_post
+df_post = pd.read_csv('df_post_preprocessed.csv')
+a = df_post[df_post['len'] > 20]
+a = a[a['new_text'].apply(lambda x: pd.Series(list(x)).value_counts().max() / len(x) > 0.3)]
+display(df_post)
 
 #                           СБОР ПОСТОВ НА КАЖДОГО ПОЛЬЗОВАТЕЛЯ
 # собираем все посты по пользвоател без дубликатов (одинаковый текст постов исклюячаестя)
