@@ -133,7 +133,7 @@ class TextPreprocessing:
     def clean_url_and_email(text_obj):
         """очистка текста от ссылок (http, https) и адресов электронной почты (example@google.com, etc)
         """
-        text_obj = re.sub(r'https?://\S+', ' ', text_obj)
+        text_obj = re.sub(r'http[s]?://\S+|www\.\S+', ' ', text_obj)
         return re.sub(r'\S*@\S*\s?', ' ', text_obj)
 
         
