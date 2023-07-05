@@ -97,16 +97,20 @@ df_post['new_text']  = df_post['new_text'].progress_apply(TextPreprocessing.clea
 # удаление ссылок и адресов электронной почты
 df_post['new_text']  = df_post['new_text'].progress_apply(TextPreprocessing.clean_url_and_email, duration_log=False)
 
+# очистка сокращений
+df_post['new_text']  = df_post['new_text'].progress_apply(TextPreprocessing.clean_short_constructions, duration_log=False)
+
 # очистка текста от всего, кроме букв, пробелов и тире(если оно стоит между буквами)
 df_post['new_text']  = df_post['new_text'].progress_apply(TextPreprocessing.clean_text_total, duration_log=False)
 
 # леммматизация
 df_post['new_text']  = df_post['new_text'].progress_apply(TextPreprocessing.lemmatization_v2, duration_log=False)
-# удаление лишних пробелов
-df_post['new_text']  = df_post['new_text'].progress_apply(TextPreprocessing.clean_extra_spaces, duration_log=False)
 
 # стоп слова
 df_post['new_text']  = df_post['new_text'].progress_apply(TextPreprocessing.remove_Stopwords, duration_log=False)
+
+# удаление лишних пробелов
+df_post['new_text']  = df_post['new_text'].progress_apply(TextPreprocessing.clean_extra_spaces, duration_log=False)
 
 df_post['len'] = df_post['new_text'].str.strip().str.len()
 # отбрасываем пустые посты
