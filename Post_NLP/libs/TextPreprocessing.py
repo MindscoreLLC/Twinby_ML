@@ -103,7 +103,7 @@ class TextPreprocessing:
            используется декоратор CreationBagWords.process_text_in_df, благодаря которому в данный метод
            будет передана строка, даже если при ее вызове был указан датафрейм в качестве параметра text_obj 
         '''
-        return BeautifulSoup(text_obj, 'lxml').get_text() # очистка от html тегов
+        return BeautifulSoup(text_obj, 'lxml').get_text()  # очистка от html тегов
 
     
     
@@ -111,17 +111,12 @@ class TextPreprocessing:
     @time_log
     @process_text_in_df
     def clean_text_total(text_obj):
-        '''очистка текста от любых символов, кроме букв русского и английского алфавита, цифр
-           поведение метода зависит от типа передаваемого текстового объекта [text_obj]
-           
-           text_obj: может быть - 1) экземпляр класса str, тогда метод возвращает измененную строку
-                                  2) экземпляр класса pd.DataFrame, тогда методов возвращает преобразованный датафрейм
-           если text_obj является датафреймом, он должен иметь поле ['desc']
-           
-           используется декоратор CreationBagWords.process_text_in_df, благодаря которому в данный метод
-           будет передана строка, даже если при ее вызове был указан датафрейм в качестве параметра text_obj 
-        '''
-        return re.sub(r'[^А-Яа-яЁёA-Za-z0-9 ]+', ' ', text_obj)
+        """очистка текста от любых символов, кроме букв русского и английского алфавита
+        """
+        # очищаем от всего, кроме текста, пробелов и тире
+        text_obj = re.sub(r'[^А-Яа-яЁёA-Za-z\- ]+', ' ', text_obj)
+        # очищаем от тире, которое не окружено с двух сторон буквами
+        return re.sub(r'[^\w]-[^\w]', ' ', text_obj)
     
     
     @staticmethod
@@ -131,6 +126,16 @@ class TextPreprocessing:
         '''очистка текста от лишних пробелов (в начале и конце строки, множественные пробелы в середине строки будут заменены на 1 пробел)
         '''
         return re.sub(' +', ' ', text_obj).strip()
+
+    @staticmethod
+    @time_log
+    @process_text_in_df
+    def clean_url_and_email(text_obj):
+        """очистка текста от ссылок (http, https) и адресов электронной почты (example@google.com, etc)
+        """
+        text_obj = re.sub(r'https?://\S+', ' ', text_obj)
+        return re.sub(r'\S*@\S*\s?', ' ', text_obj)
+
         
 
     @staticmethod
@@ -285,6 +290,6 @@ class TextPreprocessing:
     @staticmethod
     @time_log
     @process_text_in_df
-    def stemming_and_lemmatization_v2(text_obj):
+    def lemmatization_v2(text_obj):
         """Лемматизация"""
         return ' '.join([token.lemma_ for token in nlp(text_obj)])
